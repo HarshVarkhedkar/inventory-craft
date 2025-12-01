@@ -29,6 +29,7 @@ const Inventory = () => {
   const [filteredInventory, setFilteredInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const isAdmin = auth.isAdmin();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentItem, setCurrentItem] = useState<any>(null);
@@ -178,16 +179,17 @@ const Inventory = () => {
               <Download className="w-4 h-4" />
               Export CSV
             </Button>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 bg-gradient-primary hover:opacity-90" onClick={() => {
-                  resetForm();
-                  setDialogOpen(true);
-                }}>
-                  <Plus className="w-4 h-4" />
-                  Add Item
-                </Button>
-              </DialogTrigger>
+            {isAdmin && (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2 bg-gradient-primary hover:opacity-90" onClick={() => {
+                    resetForm();
+                    setDialogOpen(true);
+                  }}>
+                    <Plus className="w-4 h-4" />
+                    Add Item
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle>{editMode ? "Edit Item" : "Add New Item"}</DialogTitle>
@@ -244,6 +246,7 @@ const Inventory = () => {
                 </form>
               </DialogContent>
             </Dialog>
+            )}
           </div>
         </div>
 
@@ -307,22 +310,29 @@ const Inventory = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleEdit(item)}
-                            className="hover:bg-primary/10 hover:text-primary"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDelete(item.productId)}
-                            className="hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {isAdmin && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleEdit(item)}
+                              className="hover:bg-primary/10 hover:text-primary"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {isAdmin && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDelete(item.productId)}
+                              className="hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {!isAdmin && (
+                            <span className="text-xs text-muted-foreground px-2">View only</span>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
