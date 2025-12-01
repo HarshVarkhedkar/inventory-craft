@@ -81,8 +81,16 @@ const AdminFeatures = () => {
     }
 
     try {
-      // Call backend API to send email
-      await api.sendEmail(token, emailData);
+      // ✅ FIX: Send with correct field name "to" instead of "recipient"
+      const emailPayload = {
+        to: emailData.recipient,      // ✅ Changed from "recipient" to "to"
+        subject: emailData.subject,
+        message: emailData.message
+      };
+
+      console.log("📧 Sending email with payload:", emailPayload);
+      
+      await api.sendEmail(token, emailPayload);
       
       // Create email record
       const newEmail: SentEmail = {

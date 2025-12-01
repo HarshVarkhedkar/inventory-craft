@@ -200,22 +200,25 @@ export const api = {
     return response.text();
   },
 
-  async sendEmail(token: string, emailData: { recipient: string; subject: string; message: string }) {
-    const response = await fetch(`${API_BASE_URL}/api/admin/send-email`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(emailData),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to send email');
-    }
-    
-    return response.json();
-  },
+ async sendEmail(
+  token: string,
+  emailData: { to: string; subject: string; message: string }
+) {
+  const response = await fetch(`${API_BASE_URL}/api/admin/send-email`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(emailData),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to send email');
+  }
+
+  return response.json();
+},
 
   async exportInventoryCsv(token: string) {
     const response = await fetch(`${API_BASE_URL}/api/inventory/export/csv`, {
