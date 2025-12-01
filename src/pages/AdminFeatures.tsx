@@ -17,7 +17,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
 import { auth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Mail, AlertTriangle, Send, Package, TrendingDown } from "lucide-react";
+import { Mail, AlertTriangle, Send, Package, TrendingDown, History, Clock } from "lucide-react";
+
+interface SentEmail {
+  id: string;
+  recipient: string;
+  subject: string;
+  message: string;
+  sentAt: string;
+  status: "success" | "failed";
+}
 
 const AdminFeatures = () => {
   const [inventory, setInventory] = useState<any[]>([]);
@@ -29,6 +38,15 @@ const AdminFeatures = () => {
     message: "",
   });
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
+
+  // Load sent emails from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("sentEmails");
+    if (stored) {
+      setSentEmails(JSON.parse(stored));
+    }
+  }, []);
 
   useEffect(() => {
     fetchInventory();
@@ -55,14 +73,50 @@ const AdminFeatures = () => {
     e.preventDefault();
     setSendingEmail(true);
 
+    const token = auth.getToken();
+    if (!token) {
+      toast.error("Authentication required");
+      setSendingEmail(false);
+      return;
+    }
+
     try {
-      // Here you would integrate with an email service
-      // For now, we'll just simulate the action
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success(`Email sent to ${emailData.recipient}`);
+      // Call backend API to send email
+      await api.sendEmail(token, emailData);
+      
+      // Create email record
+      const newEmail: SentEmail = {
+        id: Date.now().toString(),
+        recipient: emailData.recipient,
+        subject: emailData.subject,
+        message: emailData.message,
+        sentAt: new Date().toISOString(),
+        status: "success",
+      };
+
+      // Update sent emails list
+      const updatedEmails = [newEmail, ...sentEmails];
+      setSentEmails(updatedEmails);
+      localStorage.setItem("sentEmails", JSON.stringify(updatedEmails));
+
+      toast.success(`Email sent successfully to ${emailData.recipient}`);
       setEmailData({ recipient: "", subject: "", message: "" });
     } catch (error: any) {
-      toast.error("Failed to send email");
+      // Save failed email attempt
+      const failedEmail: SentEmail = {
+        id: Date.now().toString(),
+        recipient: emailData.recipient,
+        subject: emailData.subject,
+        message: emailData.message,
+        sentAt: new Date().toISOString(),
+        status: "failed",
+      };
+      
+      const updatedEmails = [failedEmail, ...sentEmails];
+      setSentEmails(updatedEmails);
+      localStorage.setItem("sentEmails", JSON.stringify(updatedEmails));
+
+      toast.error(error.message || "Failed to send email");
     } finally {
       setSendingEmail(false);
     }
@@ -110,7 +164,7 @@ const AdminFeatures = () => {
         </div>
 
         <Tabs defaultValue="email" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="email" className="gap-2">
               <Mail className="w-4 h-4" />
               Email Center
@@ -118,6 +172,10 @@ const AdminFeatures = () => {
             <TabsTrigger value="lowstock" className="gap-2">
               <AlertTriangle className="w-4 h-4" />
               Low Stock
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <History className="w-4 h-4" />
+              Email History
             </TabsTrigger>
           </TabsList>
 
@@ -326,6 +384,73 @@ const AdminFeatures = () => {
                   </TableBody>
                 </Table>
               </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-6">
+            <Card className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center">
+                  <History className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Email History</h2>
+                  <p className="text-sm text-muted-foreground">
+                    View all sent emails and their status
+                  </p>
+                </div>
+              </div>
+
+              {sentEmails.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Mail className="w-16 h-16 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground text-lg">No emails sent yet</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Emails you send will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sentEmails.map((email) => (
+                    <Card
+                      key={email.id}
+                      className={`p-4 ${
+                        email.status === "failed"
+                          ? "border-destructive/30 bg-destructive/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-semibold">{email.recipient}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                email.status === "success"
+                                  ? "bg-green-500/20 text-green-700 dark:text-green-400"
+                                  : "bg-destructive/20 text-destructive"
+                              }`}
+                            >
+                              {email.status === "success" ? "Sent" : "Failed"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm">{email.subject}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                              {email.message}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            {new Date(email.sentAt).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
