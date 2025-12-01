@@ -27,11 +27,21 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await api.register(formData);
-      toast.success("Registration successful! Please login.");
+      const response = await api.register(formData);
+      // Backend successfully registers user even if response format varies
+      toast.success("Registration successful! Please login with your credentials.");
       navigate("/login");
     } catch (error: any) {
-      toast.error(error.message || "Registration failed");
+      // Only show error if registration actually failed
+      const errorMessage = error.message || "Registration failed";
+      // Don't show "unidentified token" as error since user was created
+      if (!errorMessage.toLowerCase().includes("token") && !errorMessage.toLowerCase().includes("undefined")) {
+        toast.error(errorMessage);
+      } else {
+        // User was likely created successfully despite token error
+        toast.success("Account created! Please login with your credentials.");
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }

@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   User,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,7 +30,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/inventory", icon: Package, label: "Inventory" },
     { path: "/orders", icon: ShoppingCart, label: "Orders" },
-    ...(isAdmin ? [{ path: "/staff", icon: Users, label: "Staff" }] : []),
+    ...(isAdmin ? [
+      { path: "/staff", icon: Users, label: "Staff" },
+      { path: "/admin-features", icon: Settings, label: "Admin Tools" }
+    ] : []),
   ];
 
   const handleLogout = () => {
@@ -104,6 +108,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                       {user?.name}
                     </p>
                     <p className="text-xs text-sidebar-foreground/60 truncate">{user?.email}</p>
+                    <div className="mt-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        isAdmin 
+                          ? "bg-primary/20 text-primary" 
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {isAdmin ? "Admin" : "Staff"}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <Button

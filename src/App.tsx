@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Orders from "./pages/Orders";
 import Staff from "./pages/Staff";
+import AdminFeatures from "./pages/AdminFeatures";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { auth } from "./lib/auth";
@@ -54,6 +55,14 @@ const App = () => (
             element={
               <ProtectedRoute adminOnly>
                 <Staff />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-features"
+            element={
+              <ProtectedRoute adminOnly>
+                <AdminFeatures />
               </ProtectedRoute>
             }
           />
